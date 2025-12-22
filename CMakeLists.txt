@@ -137,11 +137,11 @@ else()
 endif()
 message ( STATUS "Using libairspy: ${WITH_AIR}")
 
-option(SDRPLAY "Enable SDRplay support via API version 2" ON)
+option(SDRPLAY "Enable SDRplay support via API version 3" ON)
 
 if(SDRPLAY)
 	SET(WITH_SDRPLAY NO)
-	find_library(LIBPLAY mirsdrapi-rsp)
+	find_library(LIBPLAY sdrplay_api)
 	if(LIBPLAY)
 		add_definitions(-DWITH_SDRPLAY )
 		target_sources( acarsdec PRIVATE sdrplay.c)
@@ -151,7 +151,7 @@ if(SDRPLAY)
 else()
 	SET(WITH_SDRPLAY DISABLED)
 endif()
-message ( STATUS "Using libmirsdrapi-rsp: ${WITH_SDRPLAY}")
+message ( STATUS "Using sdrplay_api: ${WITH_SDRPLAY}")
 
 option(SOAPYSDR "Enable SoapySDR support" ON)
 

@@ -41,7 +41,7 @@ It depends on some optional external libraries :
  * librtlsdr for RTL-based SDR input (http://sdr.osmocom.org/trac/wiki/rtl-sdr)
  * libsoapysdr for SoapySDR input (https://github.com/pothosware/SoapySDR)
  * libairspy for airspy SDR input (https://github.com/airspy/airspyone_host)
- * libmirsdrapi-rsp for sdrplay software radio input
+ * libsdrplay_api for sdrplay software radio input
  * libsndfile for audio input (https://github.com/libsndfile/libsndfile)
  * libasound for ALSA input (https://github.com/alsa-project/alsa-lib)
  * libacars for decoding ATS applications (https://github.com/szpajder/libacars)
@@ -199,13 +199,19 @@ DESTPARAMS are:
 Note: acarsdec will try to set the R820T tuner bandwidth to suit given frequencies.
 See https://tleconte.github.io/R820T/r820IF.html
 
-#### SDRplay (untested, uses legacy v2 API - help wanted)
+#### SDRplay (API version 3.15 and above)
 
 ```
  --sdrplay 		decode from sdrplay
+ -a <antenna>		set antenna port to use (default: first antenna)
  -c <freq>		set center frequency to tune to in MHz, e.g. 131.800 (default: automatic)
- -G <GRdB>		gain reduction in dB's, range 20 .. 59 (default: -100 is autogain)
+ -R <sample rate>	sample rate in kHz - must be a multiple of 12, range 72 .. 10000 (default: 3024)
+ -W <bandwidth>		IF bandwidth in kHz - one of: 200, 300, 600, 1536, 5000, 6000, 7000, and 8000 (default: 1536)
+ -G <gRdB>		gain reduction in dB's, range 20 .. 59 (default: -100 is autogain)
  -L <lnaState>		set the lnaState (depends on the device)
+ -n <notch filter>	enable notch filter - one of RF, FM, DAB, or RSPduo-AM (default: none enabled)
+ -p <ppm>		set ppm frequency correction (default: 0)
+ -B <bias>		enable (1) or disable (0) the bias tee (default is 0)
 ```
 
 All SDR sources described above expect a list of frequencies `<f1> [<f2> [...]]` to decode from, expressed in decimal MHz

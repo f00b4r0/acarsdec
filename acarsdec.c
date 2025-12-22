@@ -172,9 +172,15 @@ static void usage(void)
 	fprintf(stderr,
 		"\n sdrplayopts:\n"
 		" --sdrplay\t\t: decode from sdrplay\n"
+		" -a <antenna>\t\t: set antenna port to use (default: first antenna)\n"
 		" -c <freq>\t\t: set center frequency to tune to in MHz, e.g. 131.800 (default: automatic)\n"
-		" -G <GRdB>\t\t: gain reduction in dB's, range 20 .. 59 (default: -100 is autogain)\n"
-		" -L <lnaState>\t: set the lnaState (depends on the device)\n");
+		" -R <sample rate>\t: sample rate in kHz - must be a multiple of 12, range 72 .. 10000 (default: 3024)\n"
+		" -W <bandwidth>\t\t: IF bandwidth in kHz - one of: 200, 300, 600, 1536, 5000, 6000, 7000, and 8000 (default: depends on sample rate)\n"
+		" -G <gRdB>\t\t: gain reduction in dB's, range 20 .. 59 (default: -100 is autogain)\n"
+		" -L <lnaState>\t\t: set the lnaState (depends on the device)\n"
+		" -n <notch filter>\t: enable notch filter - one of RF, FM, DAB, or RSPduo-AM (default: none enabled)\n"
+		" -p <ppm>\t\t: set ppm frequency correction (default: 0)\n"
+		" -B <bias>\t\t: enable (1) or disable (0) the bias tee (default is 0)\n");
 #endif
 #ifdef WITH_SOAPY
 	fprintf(stderr,
@@ -262,6 +268,7 @@ int main(int argc, char **argv)
 	int c;
 	int res;
 	unsigned int n;
+	unsigned int sr;
 	struct sigaction sigact;
 	struct option long_opts[] = {
 #ifdef WITH_ALSA
@@ -277,7 +284,7 @@ int main(int argc, char **argv)
 		{ "airspy", required_argument, NULL, IN_AIR },
 #endif
 #ifdef WITH_SDRPLAY
-		{ "sdrplay", no_argument, NULL, IN_SDRPLAY },
+		{ "sdrplay", required_argument, NULL, IN_SDRPLAY },
 #endif
 #ifdef WITH_SOAPY
 		{ "soapysdr", required_argument, NULL, IN_SOAPY },
@@ -299,7 +306,7 @@ int main(int argc, char **argv)
 	R.idstation = strdup(sys_hostname);
 
 	res = 0;
-	while ((c = getopt_long(argc, argv, "hvt:g:m:a:Aep:c:i:L:G:b:B:", long_opts, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "hvt:g:m:a:Aep:c:i:R:W:L:G:n:b:B:", long_opts, NULL)) != EOF) {
 		switch (c) {
 		case -2:
 			res = setup_output(optarg);
@@ -364,12 +371,35 @@ int main(int argc, char **argv)
 			if (R.inmode)
 				errx(-1, "Only 1 input allowed");
 			R.inmode = IN_SDRPLAY;
+			inarg = optarg;
+			break;
+		case 'R':
+			sr = (unsigned)atoi(optarg);
+			if (sr % (INTRATE / 1000))
+				errx(-1, "Invalid sample rate (not a multiple of 12k)");
+			if (sr < 72 || sr > 10000)
+				errx(-1, "Sample rate out of range 72 .. 10000");
+			R.rateMult = sr / (INTRATE / 1000);
+			break;
+		case 'W':
+			R.bandwidth = atoi(optarg);
 			break;
 		case 'L':
 			R.lnaState = atoi(optarg);
 			break;
 		case 'G':
-			R.GRdB = atoi(optarg);
+			R.gRdB = atoi(optarg);
+			break;
+		case 'n':
+			if (strcasecmp(optarg, "RF") == 0 || strcasecmp(optarg, "FM") == 0) {
+				R.rfNotch = 1;
+			} else if (strcasecmp(optarg, "DAB") == 0) {
+				R.dabNotch = 1;
+			} else if (strcasecmp(optarg, "RSPduo-AM") == 0) {
+				R.rspDuoAmNotch = 1;
+			} else {
+				errx(-1, "Invalid notch selection");
+			}
 			break;
 #endif
 #ifdef WITH_SOAPY
@@ -379,6 +409,8 @@ int main(int argc, char **argv)
 			R.inmode = IN_SOAPY;
 			inarg = optarg;
 			break;
+#endif
+#if defined(WITH_SOAPY) || defined(WITH_SDRPLAY)
 		case 'a':
 			R.antenna = optarg;
 			break;
@@ -445,7 +477,7 @@ int main(int argc, char **argv)
 #endif
 #ifdef WITH_SDRPLAY
 	case IN_SDRPLAY:
-		res = initSdrplay();
+		res = initSdrplay(inarg);
 		break;
 #endif
 #ifdef WITH_SOAPY
@@ -532,7 +564,8 @@ int main(int argc, char **argv)
 #endif
 #ifdef WITH_SDRPLAY
 	case IN_SDRPLAY:
-		res = runSdrplaySample();
+		runSdrplaySample();
+		res = runSdrplayClose();
 		break;
 #endif
 #ifdef WITH_SOAPY
