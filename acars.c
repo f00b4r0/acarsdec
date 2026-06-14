@@ -364,7 +364,7 @@ synced:
 		break;	// else fail
 
 	case TXT:
-		if (unlikely(ch->blk->txtlen > TXTMAXLEN)) {
+		if (unlikely(ch->blk->txtlen >= TXTMAXLEN)) {
 			vprerr("#%d too long\n", ch->chn + 1);
 			break;	// fail
 		}
