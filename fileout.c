@@ -56,7 +56,7 @@ static FILE *open_outfile(fileout_t *fout)
 			vprerr(ERRPFX "open_outfile(): strfime returned 0\n");
 			return NULL;
 		}
-		filename = malloc(fout->prefix_len + tlen + 2);
+		filename = malloc(fout->filename_len + tlen + 2);
 		if (filename == NULL) {
 			perror(ERRPFX "open_outfile()");
 			return NULL;
@@ -103,6 +103,8 @@ fileout_t *Fileoutinit(char *params)
 		return fout;
 	}
 
+	fout->filename_len = strlen(path);
+
 	fout->rotate = ROTATE_NONE;
 	if (rotate) {
 		if (!strcmp("daily", rotate))
@@ -120,7 +122,6 @@ fileout_t *Fileoutinit(char *params)
 		}
 	}
 	fout->filename_prefix = path;
-	fout->prefix_len = strlen(path);
 
 	if ((open_outfile(fout)) == NULL) {
 		free(fout);

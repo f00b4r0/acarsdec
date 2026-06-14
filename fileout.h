@@ -7,7 +7,7 @@ typedef struct {
 	FILE *F;
 	const char *filename_prefix;
 	const char *extension;
-	size_t prefix_len;
+	size_t filename_len;
 	struct tm current_tm;
 	enum { ROTATE_NONE, ROTATE_HOURLY, ROTATE_DAILY } rotate;
 } fileout_t;
