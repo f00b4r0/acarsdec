@@ -90,10 +90,10 @@ typedef struct {
 	char sublabel[3];	// null-terminated
 	char mfi[3];		// null-terminated
 	char be;
-	char msn[4];		// only for libacars - null-terminated copy of msg.no[0-3]
 	int err;
 	float lvl, nf;
 #ifdef HAVE_LIBACARS
+	char msn[4];		// only for libacars - null-terminated copy of msg.no[0-3]
 	la_reasm_status reasm_status;
 	la_proto_node *decoded_tree;
 #endif
