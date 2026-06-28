@@ -28,6 +28,12 @@
 #include "lib.h"
 #include <sdrplay_api.h>
 
+
+// SDRPlay API 3.14
+#ifndef SDRPLAY_RSPdxR2_ID
+#define SDRPLAY_RSPdxR2_ID (SDRPLAY_RSPdx_ID)
+#endif
+
 // choose 252 as the 12k (INTRATE) multiplier because 12k * 252 = 3024Msps
 // (which is reasonable)
 // the specific reason for 252 is that the SDRplay API RX callback size
@@ -247,7 +253,7 @@ int initSdrplay(char *optarg)
 	}
 
 	if (R.bias) {
-		if (device.hwVer == SDRPLAY_RSP1A_ID || SDRPLAY_RSP1B_ID) {
+		if (device.hwVer == SDRPLAY_RSP1A_ID || device.hwVer == SDRPLAY_RSP1B_ID) {
 			rx_channel_params->rsp1aTunerParams.biasTEnable = R.bias;
 		} else if (device.hwVer == SDRPLAY_RSP2_ID) {
 			rx_channel_params->rsp2TunerParams.biasTEnable = R.bias;
