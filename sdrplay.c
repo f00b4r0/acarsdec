@@ -247,7 +247,7 @@ int initSdrplay(char *optarg)
 	}
 
 	if (R.bias) {
-		if (device.hwVer == SDRPLAY_RSP1A_ID || SDRPLAY_RSP1B_ID) {
+		if (device.hwVer == SDRPLAY_RSP1A_ID || device.hwVer == SDRPLAY_RSP1B_ID) {
 			rx_channel_params->rsp1aTunerParams.biasTEnable = R.bias;
 		} else if (device.hwVer == SDRPLAY_RSP2_ID) {
 			rx_channel_params->rsp2TunerParams.biasTEnable = R.bias;
