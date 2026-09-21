@@ -168,6 +168,21 @@ int initSdrplay(char *optarg)
 	rx_channel_params->tunerParams.ifType = sdrplay_api_IF_Zero;
 	rx_channel_params->tunerParams.rfFreq.rfHz = Fc;
 
+	uint32_t bw = ((R.maxFc - R.minFc) + 2 * INTRATE) / 1000U;
+	sdrplay_api_Bw_MHzT bwt = sdrplay_api_BW_Undefined;
+	if (bw <= 200U) bwt = sdrplay_api_BW_0_200;
+	else if (bw <= 300U) bwt = sdrplay_api_BW_0_300;
+	else if (bw <= 600U) bwt = sdrplay_api_BW_0_600;
+	else if (bw <= 1536U) bwt = sdrplay_api_BW_1_536;
+	else if (bw <= 5000U) bwt = sdrplay_api_BW_5_000;
+	else if (bw <= 6000U) bwt = sdrplay_api_BW_6_000;
+	else if (bw <= 7000U) bwt = sdrplay_api_BW_7_000;
+	else if (bw <= 8000U) bwt = sdrplay_api_BW_8_000;
+	rx_channel_params->tunerParams.bwType = bwt;
+
+	vprerr("Setting center freq: %.4f MHz, sample rate: %.4f MS/s, decimation factor: %d, bandwidth: %d kHZ\n",
+	       Fc / 1e6, sr / 1e6, decimation, bwt);
+
 	if (R.gRdB == -100) {
 		rx_channel_params->ctrlParams.agc.enable = sdrplay_api_AGC_5HZ;
 		rx_channel_params->ctrlParams.agc.setPoint_dBfs = -30;	// from dumpvdl2
