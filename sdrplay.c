@@ -94,29 +94,24 @@ int initSdrplay(char *optarg)
 	err = sdrplay_api_ApiVersion(&ver);
 	if (err != sdrplay_api_Success) {
 		fprintf(stderr, ERRPFX "ApiVersion failed: %s\n", sdrplay_api_GetErrorString(err));
-		sdrplay_api_Close();
-		return -2;
+		goto fail;
 	}	   
 	if (ver != SDRPLAY_API_VERSION) {
 		fprintf(stderr, ERRPFX "API version mismatch - expected=%.2f found=%.2f\n", SDRPLAY_API_VERSION, ver);
-		sdrplay_api_Close();
-		return -3;
+		goto fail;
 	}
 
 	/* select device */
 	err = sdrplay_api_LockDeviceApi();
 	if (err != sdrplay_api_Success) {
 		fprintf(stderr, ERRPFX "LockDeviceApi failed: %s\n", sdrplay_api_GetErrorString(err));
-		sdrplay_api_Close();
-		return -4;
+		goto fail;
 	}
 	unsigned int ndevices = sizeof(devices) / sizeof(devices[0]);
 	err = sdrplay_api_GetDevices(devices, &ndevices, ndevices);
 	if (err != sdrplay_api_Success) {
 		fprintf(stderr, ERRPFX "GetDevices failed: %s\n", sdrplay_api_GetErrorString(err));
-		sdrplay_api_UnlockDeviceApi();
-		sdrplay_api_Close();
-		return -5;
+		goto unlockfail;
 	}
 	int deviceIndex = -1;
 	if (serialNumber != NULL) {
@@ -133,9 +128,7 @@ int initSdrplay(char *optarg)
 	}
 	if (deviceIndex == -1) {
 		fprintf(stderr, ERRPFX "RSP not found or not available\n");
-		sdrplay_api_UnlockDeviceApi();
-		sdrplay_api_Close();
-		return -6;
+		goto unlockfail;
 	}
 	device = devices[deviceIndex];
 
@@ -143,9 +136,7 @@ int initSdrplay(char *optarg)
 	if (device.hwVer == SDRPLAY_RSPduo_ID) {
 		if ((device.rspDuoMode & sdrplay_api_RspDuoMode_Single_Tuner) != sdrplay_api_RspDuoMode_Single_Tuner) {
 			fprintf(stderr, ERRPFX "RSPduo single tuner mode not available\n");
-			sdrplay_api_UnlockDeviceApi();
-			sdrplay_api_Close();
-			return -7;
+			goto unlockfail;
 		}
 		device.rspDuoMode = sdrplay_api_RspDuoMode_Single_Tuner;
 		device.tuner = sdrplay_api_Tuner_A;
@@ -154,17 +145,13 @@ int initSdrplay(char *optarg)
 	err = sdrplay_api_SelectDevice(&device);
 	if (err != sdrplay_api_Success) {
 		fprintf(stderr, ERRPFX "SelectDevice failed: %s\n", sdrplay_api_GetErrorString(err));
-		sdrplay_api_UnlockDeviceApi();
-		sdrplay_api_Close();
-		return -8;
+		goto unlockfail;
 	}
 
 	err = sdrplay_api_UnlockDeviceApi();
 	if (err != sdrplay_api_Success) {
 		fprintf(stderr, ERRPFX "UnlockDeviceApi failed: %s\n", sdrplay_api_GetErrorString(err));
-		sdrplay_api_ReleaseDevice(&device);
-		sdrplay_api_Close();
-		return -9;
+		goto unlockfail;
 	}
 
 	/* select device settings */
@@ -172,9 +159,7 @@ int initSdrplay(char *optarg)
 	err = sdrplay_api_GetDeviceParams(device.dev, &device_params);
 	if (err != sdrplay_api_Success) {
 		fprintf(stderr, ERRPFX "GetDeviceParams failed: %s\n", sdrplay_api_GetErrorString(err));
-		sdrplay_api_ReleaseDevice(&device);
-		sdrplay_api_Close();
-		return -10;
+		goto fail;
 	}
 
 	device_params->devParams->mode = sdrplay_api_BULK;
@@ -220,13 +205,11 @@ int initSdrplay(char *optarg)
 				break;
 			default:
 				fprintf(stderr, ERRPFX "cannot select antenna port: not supported\n");
-				return -11;
+				goto fail;
 		}
 		if (!antennaOK) {
 			fprintf(stderr, ERRPFX "invalid antenna: %s\n", R.antenna);
-			sdrplay_api_ReleaseDevice(&device);
-			sdrplay_api_Close();
-			return -11;
+			goto fail;
 		}
 	}
 
@@ -247,17 +230,23 @@ int initSdrplay(char *optarg)
 				device_params->devParams->rspDxParams.biasTEnable = R.bias;
 				break;
 			default:
-				fprintf(stderr, ERRPFX "not enabling Bias-T: not supported\n");
+				fprintf(stderr, WARNPFX "not enabling Bias-T: not supported\n");
 		}
 	}
 
 	if (R.gRdB == -100)
-		fprintf(stderr, "SDRplay device selects freq %d and sets autogain and LNA state %d\n", Fc, R.lnaState);
+		vprerr("SDRplay device selects freq %d and sets autogain and LNA state %d\n", Fc, R.lnaState);
 	else
-		fprintf(stderr, "SDRplay device selects freq %d and sets IF gain reduction %d and LNA state %d\n",
+		vprerr("SDRplay device selects freq %d and sets IF gain reduction %d and LNA state %d\n",
 			Fc, R.gRdB, R.lnaState);
 
 	return 0;
+
+unlockfail:
+	sdrplay_api_UnlockDeviceApi();
+fail:
+	sdrplay_api_Close();
+	return -1;
 }
 
 static void sdrplayRXCallback(short *xi,
@@ -284,9 +273,7 @@ int runSdrplaySample(void)
 	err = sdrplay_api_Init(device.dev, &callbackFns, NULL);
 	if (err != sdrplay_api_Success) {
 		fprintf(stderr, ERRPFX "Init failed: %s\n", sdrplay_api_GetErrorString(err));
-		sdrplay_api_ReleaseDevice(&device);
-		sdrplay_api_Close();
-		return -1;
+		goto fail;
 	}
 
 	while (R.running)
@@ -295,12 +282,14 @@ int runSdrplaySample(void)
 	err = sdrplay_api_Uninit(device.dev);
 	if (err != sdrplay_api_Success) {
 		fprintf(stderr, ERRPFX "Uninit failed: %s\n", sdrplay_api_GetErrorString(err));
-		sdrplay_api_ReleaseDevice(&device);
-		sdrplay_api_Close();
-		return -2;
+		goto fail;
 	}
 
 	return 0;
+
+fail:
+	sdrplay_api_Close();
+	return -1;
 }
 
 static unsigned int nextSampleNum = 0xffffffff;
@@ -370,11 +359,9 @@ int runSdrplayClose(void)
 	sdrplay_api_ErrT err;
 
 	err = sdrplay_api_ReleaseDevice(&device);
-	if (err != sdrplay_api_Success) {
-		fprintf(stderr, ERRPFX "ReleaseDevice failed: %s\n", sdrplay_api_GetErrorString(err));
-		sdrplay_api_Close();
-		return -1;
-	}
+	if (err != sdrplay_api_Success)
+		fprintf(stderr, WARNPFX "ReleaseDevice failed: %s\n", sdrplay_api_GetErrorString(err));
+
 	err = sdrplay_api_Close();
 	if (err != sdrplay_api_Success) {
 		fprintf(stderr, ERRPFX "Close failed: %s\n", sdrplay_api_GetErrorString(err));
