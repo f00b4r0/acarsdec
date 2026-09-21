@@ -148,16 +148,7 @@ int initSdrplay(char *optarg)
 			return -7;
 		}
 		device.rspDuoMode = sdrplay_api_RspDuoMode_Single_Tuner;
-		if (R.antenna != NULL) {
-			if (strcmp(R.antenna, "Tuner 1 50 ohm") == 0 || strcmp(R.antenna, "High Z") == 0) {
-				device.tuner = sdrplay_api_Tuner_A;
-			} else if (strcmp(R.antenna, "Tuner 2 50 ohm") == 0) {
-				device.tuner = sdrplay_api_Tuner_B;
-			} else {
-				device.tuner = sdrplay_api_Tuner_A;
-			}
-		}
-		device.rspDuoSampleFreq = 0;
+		device.tuner = sdrplay_api_Tuner_A;
 	}
 
 	err = sdrplay_api_SelectDevice(&device);
@@ -204,39 +195,32 @@ int initSdrplay(char *optarg)
 	rx_channel_params->tunerParams.rfFreq.rfHz = Fc;
 	if (R.antenna != NULL) {
 		int antennaOK = 0;
-		if (device.hwVer == SDRPLAY_RSP2_ID) {
-			if (strcmp(R.antenna, "Antenna A") == 0) {
-				antennaOK = 1;
-				rx_channel_params->rsp2TunerParams.antennaSel = sdrplay_api_Rsp2_ANTENNA_A;
-				rx_channel_params->rsp2TunerParams.amPortSel = sdrplay_api_Rsp2_AMPORT_2;
-			} else if (strcmp(R.antenna, "Antenna B") == 0) {
-				antennaOK = 1;
-				rx_channel_params->rsp2TunerParams.antennaSel = sdrplay_api_Rsp2_ANTENNA_B;
-				rx_channel_params->rsp2TunerParams.amPortSel = sdrplay_api_Rsp2_AMPORT_2;
-			} else if (strcmp(R.antenna, "Hi-Z") == 0) {
-				antennaOK = 1;
-				rx_channel_params->rsp2TunerParams.antennaSel = sdrplay_api_Rsp2_ANTENNA_A;
-				rx_channel_params->rsp2TunerParams.amPortSel = sdrplay_api_Rsp2_AMPORT_1;
-			}
-		} else if (device.hwVer == SDRPLAY_RSPduo_ID) {
-			if (strcmp(R.antenna, "High Z") == 0) {
-				antennaOK = 1;
-				rx_channel_params->rspDuoTunerParams.tuner1AmPortSel = sdrplay_api_RspDuo_AMPORT_1;
-			} else {
-				antennaOK = 1;
-				rx_channel_params->rspDuoTunerParams.tuner1AmPortSel = sdrplay_api_RspDuo_AMPORT_2;
-			}
-		} else if (device.hwVer == SDRPLAY_RSPdx_ID || device.hwVer == SDRPLAY_RSPdxR2_ID) {
-			if (strcmp(R.antenna, "Antenna A") == 0) {
-				antennaOK = 1;
-				device_params->devParams->rspDxParams.antennaSel = sdrplay_api_RspDx_ANTENNA_A;
-			} else if (strcmp(R.antenna, "Antenna B") == 0) {
-				antennaOK = 1;
-				device_params->devParams->rspDxParams.antennaSel = sdrplay_api_RspDx_ANTENNA_B;
-			} else if (strcmp(R.antenna, "Antenna C") == 0) {
-				antennaOK = 1;
-				device_params->devParams->rspDxParams.antennaSel = sdrplay_api_RspDx_ANTENNA_C;
-			}
+		switch (device.hwVer) {
+			case SDRPLAY_RSP2_ID:
+				if (strcmp(R.antenna, "A") == 0) {
+					antennaOK = 1;
+					rx_channel_params->rsp2TunerParams.antennaSel = sdrplay_api_Rsp2_ANTENNA_A;
+				} else if (strcmp(R.antenna, "B") == 0) {
+					antennaOK = 1;
+					rx_channel_params->rsp2TunerParams.antennaSel = sdrplay_api_Rsp2_ANTENNA_B;
+				}
+				break;
+			case SDRPLAY_RSPdx_ID:
+			case SDRPLAY_RSPdxR2_ID:
+				if (strcmp(R.antenna, "A") == 0) {
+					antennaOK = 1;
+					device_params->devParams->rspDxParams.antennaSel = sdrplay_api_RspDx_ANTENNA_A;
+				} else if (strcmp(R.antenna, "B") == 0) {
+					antennaOK = 1;
+					device_params->devParams->rspDxParams.antennaSel = sdrplay_api_RspDx_ANTENNA_B;
+				} else if (strcmp(R.antenna, "C") == 0) {
+					antennaOK = 1;
+					device_params->devParams->rspDxParams.antennaSel = sdrplay_api_RspDx_ANTENNA_C;
+				}
+				break;
+			default:
+				fprintf(stderr, ERRPFX "cannot select antenna port: not supported\n");
+				return -11;
 		}
 		if (!antennaOK) {
 			fprintf(stderr, ERRPFX "invalid antenna: %s\n", R.antenna);
