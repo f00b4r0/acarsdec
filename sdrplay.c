@@ -231,14 +231,23 @@ int initSdrplay(char *optarg)
 	}
 
 	if (R.bias) {
-		if (device.hwVer == SDRPLAY_RSP1A_ID || device.hwVer == SDRPLAY_RSP1B_ID) {
-			rx_channel_params->rsp1aTunerParams.biasTEnable = R.bias;
-		} else if (device.hwVer == SDRPLAY_RSP2_ID) {
-			rx_channel_params->rsp2TunerParams.biasTEnable = R.bias;
-		} else if (device.hwVer == SDRPLAY_RSPduo_ID) {
-			rx_channel_params->rspDuoTunerParams.biasTEnable = R.bias;
-		} else if (device.hwVer == SDRPLAY_RSPdx_ID || device.hwVer == SDRPLAY_RSPdxR2_ID) {
-			device_params->devParams->rspDxParams.biasTEnable = R.bias;
+		switch (device.hwVer) {
+			case SDRPLAY_RSP1A_ID:
+			case SDRPLAY_RSP1B_ID:
+				rx_channel_params->rsp1aTunerParams.biasTEnable = R.bias;
+				break;
+			case SDRPLAY_RSP2_ID:
+				rx_channel_params->rsp2TunerParams.biasTEnable = R.bias;
+				break;
+			case SDRPLAY_RSPduo_ID:
+				rx_channel_params->rspDuoTunerParams.biasTEnable = R.bias;
+				break;
+			case SDRPLAY_RSPdx_ID:
+			case SDRPLAY_RSPdxR2_ID:
+				device_params->devParams->rspDxParams.biasTEnable = R.bias;
+				break;
+			default:
+				fprintf(stderr, ERRPFX "not enabling Bias-T: not supported\n");
 		}
 	}
 
