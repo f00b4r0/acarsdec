@@ -73,9 +73,6 @@ int initSdrplay(char *optarg)
 	if (!R.gRdB)
 		R.gRdB = -100;	// AGC
 
-	if (!R.lnaState)
-		R.lnaState = 2;
-
 	Fc = find_centerfreq(R.minFc, R.maxFc, R.rateMult);
 	if (Fc == 0)
 		return 5;
@@ -169,15 +166,20 @@ int initSdrplay(char *optarg)
 	rx_channel_params->ctrlParams.decimation.enable = decimation > 1;
 	rx_channel_params->ctrlParams.decimation.decimationFactor = decimation;
 	rx_channel_params->tunerParams.ifType = sdrplay_api_IF_Zero;
+	rx_channel_params->tunerParams.rfFreq.rfHz = Fc;
+
 	if (R.gRdB == -100) {
-		rx_channel_params->ctrlParams.agc.enable = sdrplay_api_AGC_100HZ;
+		rx_channel_params->ctrlParams.agc.enable = sdrplay_api_AGC_5HZ;
+		rx_channel_params->ctrlParams.agc.setPoint_dBfs = -30;	// from dumpvdl2
+		vprerr("AGC enabled, setpoint at -30 dBFS\n");
 	} else {
 		rx_channel_params->ctrlParams.agc.enable = sdrplay_api_AGC_DISABLE;
 		rx_channel_params->tunerParams.gain.gRdB = R.gRdB;
+		rx_channel_params->tunerParams.gain.LNAstate = R.lnaState;
+		vprerr("IF gain reduction: %d, LNA state: %d\n", R.gRdB, R.lnaState);
 	}
-	rx_channel_params->tunerParams.gain.LNAstate = R.lnaState;
 	device_params->devParams->ppm = (double)(R.ppm);
-	rx_channel_params->tunerParams.rfFreq.rfHz = Fc;
+
 	if (R.antenna != NULL) {
 		int antennaOK = 0;
 		switch (device.hwVer) {
@@ -233,12 +235,6 @@ int initSdrplay(char *optarg)
 				fprintf(stderr, WARNPFX "not enabling Bias-T: not supported\n");
 		}
 	}
-
-	if (R.gRdB == -100)
-		vprerr("SDRplay device selects freq %d and sets autogain and LNA state %d\n", Fc, R.lnaState);
-	else
-		vprerr("SDRplay device selects freq %d and sets IF gain reduction %d and LNA state %d\n",
-			Fc, R.gRdB, R.lnaState);
 
 	return 0;
 
@@ -341,14 +337,7 @@ void sdrplayEventCallback(sdrplay_api_EventT eventId,
 	(void)cbContext;
 
 	if (eventId == sdrplay_api_PowerOverloadChange) {
-		switch (params->powerOverloadParams.powerOverloadChangeType) {
-		case sdrplay_api_Overload_Detected:
-			fprintf(stderr, WARNPFX "power overload detected event\n");
-			break;
-		case sdrplay_api_Overload_Corrected:
-			fprintf(stderr, WARNPFX "power overload correct event\n");
-			break;
-		}
+		vprerr("power overload %s event\n", (params->powerOverloadParams.powerOverloadChangeType == sdrplay_api_Overload_Detected) ? "detected" : "corrected");
 		sdrplay_api_Update(device.dev, tuner, sdrplay_api_Update_Ctrl_OverloadMsgAck, sdrplay_api_Update_Ext1_None);
 	}
 	return;
