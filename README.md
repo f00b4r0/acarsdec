@@ -196,15 +196,15 @@ DESTPARAMS are:
  -g <linearity_gain>	set linearity gain [0-21] (default: 18)
 ```
 
-#### SDRplay (API version 3.15 and above - untested/unmaintained, help wanted)
+#### SDRplay (API version 3.15 and above - barely tested, help wanted)
 
 ```
  --sdrplay <device>	decode from sdrplay with sequence number <device> or hex serial <device>
- -a <antenna>		set antenna port to use (default: first antenna)
+ -a <antenna>		set antenna port to use, A B or C (default: first antenna)
  -B <bias>		enable (1) or disable (0) the bias tee (default is 0)
  -c <freq>		set center frequency to tune to in MHz, e.g. 131.800 (default: automatic)
  -G <gRdB>		gain reduction in dB's, range 20 .. 59 (default: -100 is autogain)
- -L <lnaState>		set the lnaState (depends on the device)
+ -L <lnaState>		set the lnaState, works together with gRdB (depends on the device)
  -m <rateMult>		set sample rate multiplier: sample rate is <rateMult> * 12000 S/s (default: 252)
  -p <ppm>		set ppm frequency correction (default: 0)
 ```

@@ -172,11 +172,11 @@ static void usage(void)
 	fprintf(stderr,
 		"\n sdrplayopts:\n"
 		" --sdrplay <device>\t: decode from sdrplay with sequence number <device> or hex serial <device>\n"
-		" -a <antenna>\t\t: set antenna port to use (default: first antenna)\n"
+		" -a <antenna>\t\t: set antenna port to use, A B or C (default: first antenna)\n"
 		" -B <bias>\t\t: enable (1) or disable (0) the bias tee (default is 0)\n"
 		" -c <freq>\t\t: set center frequency to tune to in MHz, e.g. 131.800 (default: automatic)\n"
 		" -G <gRdB>\t\t: gain reduction in dB's, range 20 .. 59 (default: -100 is autogain)\n"
-		" -L <lnaState>\t\t: set the lnaState (depends on the device)\n"
+		" -L <lnaState>\t\t: set the lnaState, works together with gRdB (depends on the device)\n"
 		" -m <rateMult>\t\t: set sample rate multiplier: sample rate is <rateMult> * 12000 S/s (default: 252)\n"
 		" -p <ppm>\t\t: set ppm frequency correction (default: 0)\n");
 #endif
