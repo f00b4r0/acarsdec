@@ -345,7 +345,7 @@ synced:
 	case SOH1:
 		if (likely(r == SOH)) {
 			if (ch->blk == NULL) {
-				ch->blk = malloc(sizeof(*ch->blk));
+				ch->blk = calloc(1, sizeof(*ch->blk));
 				if (unlikely(ch->blk == NULL)) {
 					perror(NULL);
 					break;	// fail
@@ -356,8 +356,6 @@ synced:
 			ch->blk->lvl = 10 * log10f(ch->MskPwr);
 			ch->blk->nf = 20 * log10f(ch->MskNF);
 			ch->blk->chn = ch->chn;
-			ch->blk->txtlen = 0;
-			ch->blk->err = 0;
 			return;
 		}
 		vprerr("#%d didn't get SOH: %x\n", ch->chn+1, r);
