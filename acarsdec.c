@@ -177,7 +177,7 @@ static void usage(void)
 		" -c <freq>\t\t: set center frequency to tune to in MHz, e.g. 131.800 (default: automatic)\n"
 		" -G <gRdB>\t\t: gain reduction in dB's, range 20 .. 59 (default: -100 is autogain)\n"
 		" -L <lnaState>\t\t: set the lnaState, works together with gRdB (depends on the device)\n"
-		" -m <rateMult>\t\t: set sample rate multiplier: sample rate is <rateMult> * 12000 S/s (default: 252)\n"
+		" -m <rateMult>\t\t: set sample rate multiplier: sample rate is <rateMult> * 12000 S/s (default: automatic)\n"
 		" -p <ppm>\t\t: set ppm frequency correction (default: 0)\n");
 #endif
 #ifdef WITH_SOAPY

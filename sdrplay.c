@@ -28,13 +28,6 @@
 #include "lib.h"
 #include <sdrplay_api.h>
 
-// choose 252 as the 12k (INTRATE) multiplier because 12k * 252 = 3024Msps
-// (which is reasonable)
-// the specific reason for 252 is that the SDRplay API RX callback size
-// (numSamples) is 1008, which is an integer multiple of 252, and that is
-// supposed to improve performance with acarsdec
-#define SDRPLAY_MULT 252U
-
 #define ERRPFX	"ERROR: SDRplay: "
 #define WARNPFX	"WARNING: SDRplay: "
 
@@ -62,7 +55,9 @@ int initSdrplay(char *optarg)
 	}
 
 	if (!R.rateMult)
-		R.rateMult = SDRPLAY_MULT;
+		R.rateMult = min_multiplier(R.minFc, R.maxFc);
+
+	// SDRplay hardware sampling rate starts at 2MSps, lower rates are achieved via decimation
 	unsigned int sr = INTRATE * R.rateMult;
 	int decimation = 1;
 	while (sr < 2000000 && decimation <= 32) {
