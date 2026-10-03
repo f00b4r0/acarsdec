@@ -191,6 +191,7 @@ static void usage(void)
 		" -m <rateMult>\t\t: set sample rate multiplier: sample rate is <rateMult> * 12000 S/s (default: automatic)\n"
 		" -p <ppm>\t\t: set ppm frequency correction (default: 0)\n");
 #endif
+	fprintf(stderr, "\n --iqfile <params>\t: decode from raw IQ input, see \"--iqfile help\" for details\n");
 	exit(1);
 }
 
