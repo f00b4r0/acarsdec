@@ -30,66 +30,64 @@
 
 static FILE *iqfp;
 static enum iqfile_format { IQ_U8, IQ_S16 } iqfmt;
+static unsigned int iqrate;
 
 static int usage(void)
 {
 	fprintf(stderr,
-		"iqfile input accepts as parameter:\n"
-		" - a filename (optionally prefixed by 'file=') followed by a coma,\n"
-		"   and the optional 'format=' argument; where\n"
-		"   'format=' is one of 'U8', 'S16' (default: U8);\n"
+		"iqfile input accepts as parameters the following coma-separated elements (in any order):\n"
+		" - the 'file=' followed by a filename (mandatory),\n"
+		" - the 'sr=' argument specifying the source samplerate which must be at least %d Sps (mandatory),\n"
+		" - and the optional 'format=' argument, which is one of 'U8' (default), 'S16'.\n"
+		"The center and target frequencies must also be provided on the command line.\n"
 		"examples:\n"
-		"   'file=data.raw' to process unsigned 8-bit raw IQ data\n"
-		"   'data.raw,format=S16' to process signed 16-bit raw IQ data\n"
-		"\n"
-		"NOTE: IQ sample rate must be a multiple of %d Hz.\n"
-		"The rate multiplier must be specified via '-m'\n",
-		INTRATE);
+		"   'file=data.raw,sr=1200000' to process unsigned 8-bit raw IQ data sampled at 1.2MSps\n"
+		"   'format=S16,sr=2000000,file=data.raw' to process signed 16-bit raw IQ data sample at 2MSps\n"
+		"\n",
+		4*INTRATE);
 
 	return 1;
 }
 
 int initIqfile(char *optarg)
 {
-	char *format = NULL, *fname = NULL;
+	char *format = NULL, *fname = NULL, *sr = NULL;
 	struct params_s iqp[] = {
+		{ .name = "sr", .valp = &sr, },
 		{ .name = "format", .valp = &format, },
 		{ .name = "file", .valp = &fname, },
 	};
-	char *retp, *sep;
+	char *retp;
 	float scale = 127.5F;	// U8 default
 
-	do {
-		retp = parse_params(&optarg, iqp, ARRAY_SIZE(iqp));
-		if (retp) {
-			sep = strchr(retp, '=');
-			// backward compat: if we find a lone token, assume it's the filename if not already set
-			if (!sep && !fname)
-				fname = retp;
-			else {
-				fprintf(stderr, ERRPFX "invalid parameter '%s'\n", retp);
-				return -1;
+	if (!strcmp("help", optarg))
+		return usage();
 
-			}
-		}
-	} while (retp);
+	retp = parse_params(&optarg, iqp, ARRAY_SIZE(iqp));
+	if (retp) {
+		fprintf(stderr, ERRPFX "invalid parameter '%s'\n", retp);
+		return -1;
+	}
 
 	if (!fname) {
 		fprintf(stderr, ERRPFX "missing filename\n");
 		return -1;
 	}
 
-	if (!strcmp("help", fname))
-		return usage();
-
-	if (!R.rateMult){
-		fprintf(stderr, ERRPFX "missing rate multiplier\n");
+	if (!sr) {
+		fprintf(stderr, ERRPFX "missing samplerate\n");
 		return -1;
 	}
-
-	if (!R.Fc) {
-		fprintf(stderr, ERRPFX "missing center frequency\n");
-		return -1;
+	else {
+		iqrate = strtoul(sr, &sr, 0);
+		if ('\0' != *sr) {
+			fprintf(stderr, ERRPFX "invalid sr value '%s'\n", sr);
+			return -1;
+		}
+		if (iqrate < 4*INTRATE) {
+			fprintf(stderr, ERRPFX "invalid sr value '%d'\n", iqrate);
+			return -1;
+		}
 	}
 
 	if (format) {
@@ -107,19 +105,29 @@ int initIqfile(char *optarg)
 		}
 	}
 
+	if (!R.Fc) {
+		fprintf(stderr, ERRPFX "missing center frequency\n");
+		return -1;
+	}
+
+	if (!R.minFc) {
+		fprintf(stderr, ERRPFX "missing input frequencies\n");
+		return -1;
+	}
+
 	iqfp = fopen(fname, "r");
 	if (!iqfp) {
 		fprintf(stderr, ERRPFX "could not open %s: %s\n", fname, strerror(errno));
 		return 1;
 	}
 
-	return channels_init_sdr(R.Fc, R.rateMult, scale);
+	return channels_init_sdr_resample(R.Fc, iqrate, scale);
 }
 
 
 static void process_samples(const void *buf, size_t nread)
 {
-	const unsigned int mult = R.rateMult;
+	const unsigned int mult = iqrate / INTRATE;
 	float complex phasors[mult];
 
 	if (unlikely(nread % 2)) {
@@ -150,7 +158,7 @@ static void process_samples(const void *buf, size_t nread)
 				return;
 		}
 
-		channels_mix_phasors(phasors, lim, mult);
+		channels_mix_phasors_resample(phasors, lim, iqrate);
 		nread -= lim * 2;
 	}
 }
