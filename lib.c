@@ -120,6 +120,7 @@ int channels_init_sdr(unsigned int Fc, unsigned int multiplier, float scale)
  * @param Fc the chosen center frequency
  * @param input_rate the chosen sampling rate
  * @param scale the phasor scale (e.g. 1.0F for complex float32 phasors; 32768.0F for int16 phasors, ...)
+ * @note falls back to channels_init_sdr() if input_rate is an integer multiple of INTRATE
  */
 int channels_init_sdr_resample(unsigned int Fc, unsigned int input_rate, float scale)
 {
@@ -128,6 +129,9 @@ int channels_init_sdr_resample(unsigned int Fc, unsigned int input_rate, float s
 
 	if (!input_rate)
 		return 1;
+
+	if (!(input_rate % INTRATE))
+		return channels_init_sdr(Fc, input_rate / INTRATE, scale);
 
 	scale_factor = ((float)INTRATE / (float)input_rate) / scale;
 
@@ -271,6 +275,8 @@ void channels_mix_phasors(const float complex *restrict phasors, unsigned int le
  * @note this implementation is an order of magnitude more CPU-intensive than
  * the regular `channels_mix_phasors()` implementation and should only be used
  * for inputs that do not support sample rates which are multiples of INTRATE.
+ * @note this function, like its init() counterpart, falls back to channels_mix_phasors()
+ * if the provided samplerate *is* an integer multiple of INTRATE.
  */
 void channels_mix_phasors_resample(const float complex *restrict phasors, unsigned int len, unsigned int input_rate)
 {
@@ -281,6 +287,9 @@ void channels_mix_phasors_resample(const float complex *restrict phasors, unsign
 
 	if (unlikely(!len || !input_rate))
 		return;
+
+	if (!(input_rate % INTRATE))
+		return channels_mix_phasors(phasors, len, input_rate / INTRATE);
 
 	if (unlikely(!D)) {
 		// Allocate one accumlator per channel
