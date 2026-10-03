@@ -56,6 +56,7 @@
 #ifdef WITH_SNDFILE
  #include "soundfile.h"
 #endif
+#include "iqfile.h"
 
 runtime_t R = {
 	.mdly = 600,
@@ -286,6 +287,7 @@ int main(int argc, char **argv)
 #ifdef WITH_SOAPY
 		{ "soapysdr", required_argument, NULL, IN_SOAPY },
 #endif
+		{ "iqfile", required_argument, NULL, IN_IQFILE },
 		{ "verbose", no_argument, NULL, 'v' },
 		{ "output", required_argument, NULL, -2 },	// -1 is EOF
 		{ "statsd", required_argument, NULL, -3 },
@@ -326,6 +328,12 @@ int main(int argc, char **argv)
 			break;
 		case 'b':
 			lblf = optarg;
+			break;
+		case IN_IQFILE:
+			if (R.inmode)
+				errx(-1, "Only 1 input allowed");
+			R.inmode = IN_IQFILE;
+			inarg = optarg;
 			break;
 #ifdef WITH_ALSA
 		case IN_ALSA:
@@ -460,6 +468,9 @@ int main(int argc, char **argv)
 		res = initSoapy(inarg);
 		break;
 #endif
+	case IN_IQFILE:
+		res = initIqfile(inarg);
+		break;
 	default:
 		res = -1;
 	}
@@ -548,6 +559,9 @@ int main(int argc, char **argv)
 		res = runSoapySample();
 		break;
 #endif
+	case IN_IQFILE:
+		res = runIqfileSample();
+		break;
 	default:
 		res = -1;
 	}
