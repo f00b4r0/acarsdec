@@ -65,13 +65,18 @@ unsigned int min_multiplier(unsigned int minFc, unsigned int maxFc)
 
 unsigned int find_centerfreq_rate(unsigned int minFc, unsigned int maxFc, unsigned int input_rate)
 {
-	if (R.Fc)
-		return R.Fc;
-
-	if ((maxFc - minFc) > input_rate - 4 * INTRATE) {
-		fprintf(stderr, "Frequencies too far apart\n");
+	if (!minFc) {
+		fprintf(stderr, "ERROR: need a least one input frequency\n");
 		return 0;
 	}
+
+	if ((maxFc - minFc) > input_rate - 4 * INTRATE) {
+		fprintf(stderr, "ERROR: input frequencies too far apart\n");
+		return 0;
+	}
+
+	if (R.Fc)
+		return R.Fc;
 
 	return (maxFc + minFc) / 2;
 }
