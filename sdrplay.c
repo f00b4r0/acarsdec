@@ -43,6 +43,8 @@ int initSdrplay(char *optarg)
 	if (!optarg)
 		return 1;	// cannot happen with getopt()
 
+	R.ts = true;
+	
 	char *serialNumber = NULL;
 	int rspSequenceNumber = -1;
 	if (strlen(optarg) == 10 && strspn(optarg, "0123456789ABCDEF") == 10) {

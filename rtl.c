@@ -139,6 +139,8 @@ int initRtl(char *optarg)
 	if (!optarg)
 		return 1;	// cannot happen with getopt()
 
+	R.ts = true;
+	
 	if (!R.rateMult) {
 		m = min_multiplier(R.minFc, R.maxFc);
 		R.rateMult = (m > 80U) ? m : 80U;	// rtl has a hole in available sr between 300kHz and 900kHZ

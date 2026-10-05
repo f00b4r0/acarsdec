@@ -88,6 +88,8 @@ int initAirspy(char *optarg)
 	uint64_t *airspy_device_list = NULL;
 	uint32_t required_rate;
 
+	R.ts = true;
+
 	if (!R.gain)
 		R.gain = 18;
 

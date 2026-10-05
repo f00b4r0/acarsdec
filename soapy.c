@@ -83,6 +83,8 @@ int initSoapy(char *optarg)
 	if (!optarg)
 		return 1;	// cannot happen after getopt()
 
+	R.ts = true;
+	
 	dev = SoapySDRDevice_makeStrArgs(optarg);
 	if (dev == NULL) {
 		fprintf(stderr, ERRPFX "opening SoapySDR device using string \"%s\": %s\n", optarg, SoapySDRDevice_lastError());

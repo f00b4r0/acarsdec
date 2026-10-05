@@ -397,7 +397,7 @@ static int fmt_msg(acarsmsg_t *msg, int chn, struct timeval tv, char *buf, size_
 	else
 		len += snprintf(buf + len, bufsz - len, "[#%1d (L:%+5.1f/%.1f E:%1d) ", chn + 1, msg->lvl, msg->nf, msg->err);
 
-	if (R.inmode != IN_SNDFILE)
+	if (R.ts)
 		len += fmt_date(tv, buf + len, bufsz - len);
 
 	len += snprintf(buf + len, bufsz - len, " --------------------------------\n");
@@ -473,7 +473,7 @@ static int fmt_oneline(acarsmsg_t *msg, int chn, struct timeval tv, char *buf, s
 
 	len = snprintf(buf, bufsz, "#%1d (L:%+5.1f/%.1f E:%1d) ", chn + 1, msg->lvl, msg->nf, msg->err);
 
-	if (R.inmode != IN_SNDFILE)
+	if (R.ts)
 		len += fmt_date(tv, buf + len, bufsz - len);
 
 	len += snprintf(buf + len, bufsz - len, " %7s %6s %1c %2s %4s %s", msg->addr, msg->fid, msg->mode, msg->label, msg->no, txt);
@@ -565,8 +565,10 @@ static int fmt_json(acarsmsg_t *msg, int chn, struct timeval tv, char *buf, size
 	if (json_obj == NULL)
 		return ok;
 
-	double t = (double)tv.tv_sec + ((double)tv.tv_usec) / 1e6;
-	cJSON_AddNumberToObject(json_obj, "timestamp", t);
+	if (R.ts) {
+		double t = (double)tv.tv_sec + ((double)tv.tv_usec) / 1e6;
+		cJSON_AddNumberToObject(json_obj, "timestamp", t);
+	}
 	if (R.idstation[0])
 		cJSON_AddStringToObject(json_obj, "station_id", R.idstation);
 	cJSON_AddNumberToObject(json_obj, "channel", chn);
@@ -660,8 +662,10 @@ static int fmt_routejson(flight_t *fl, struct timeval tv, char *buf, size_t bufs
 		if (json_obj == NULL)
 			return 0;
 
-		double t = (double)tv.tv_sec + ((double)tv.tv_usec) / 1e6;
-		cJSON_AddNumberToObject(json_obj, "timestamp", t);
+		if (R.ts) {
+			double t = (double)tv.tv_sec + ((double)tv.tv_usec) / 1e6;
+			cJSON_AddNumberToObject(json_obj, "timestamp", t);
+		}
 		if (R.idstation[0])
 			cJSON_AddStringToObject(json_obj, "station_id", R.idstation);
 		cJSON_AddStringToObject(json_obj, "flight", fl->fid);
