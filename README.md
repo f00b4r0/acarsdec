@@ -209,12 +209,23 @@ DESTPARAMS are:
  -p <ppm>		set ppm frequency correction (default: 0)
 ```
 
-All SDR sources described above expect a list of frequencies `<f1> [<f2> [...]]` to decode from, expressed in decimal MHz
-e.g. `131.525 131.725 131.825`.
+All SDR sources described above as well as IQ file input below expect a list of frequencies `<f1> [<f2> [...]]`
+to decode from, expressed in decimal MHz e.g. `131.525 131.725 131.825`.
 
 **NOTE: all the SDR sources set the input gain to "automatic", which generally means "maximum" and is a bad idea for
 good ACARS message reception. It is best to tune the gain to maximize Signal-to-Noise Ratio and reduce the number of
 saturated messages (where the received level is over 0dB).**
+
+#### IQ file
+
+```
+ --iqfile file=<file>,sr=<N>,format=<N>	decode raw IQ input from <file>, with samplerate <sr> and format <U8> (default) or <S16>
+					Best performance is achieved if <sr> is a multiple of 12000S/s
+ -c <freq>		set center frequency to tune to in MHz, e.g. 131.800 (required)
+ -T			enable timestamping
+```
+
+See `--iqfile help` for more details.
 
 #### audio file
 
@@ -222,6 +233,7 @@ All formats supported by libsndfile can be processed.
 
 ```
  --sndfile <file>	decode from <file>, which must be a libsndfile supported format and sampled at a multiple of 12kHz
+ -T			enable timestamping
 ```
 
 To decode raw audio, extra parameters must be provided. Example:
