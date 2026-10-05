@@ -140,6 +140,7 @@ typedef struct {
 	unsigned int nbch;
 	volatile bool running;
 	bool verbose;
+	bool ts;		// timestamp output
 
 	// used only in output
 	bool airflt;

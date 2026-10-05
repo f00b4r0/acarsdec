@@ -111,6 +111,8 @@ int initAlsa(char *optarg)
 		return 1;
 	}
 
+	R.ts = true;
+	
 	return (0);
 }
 

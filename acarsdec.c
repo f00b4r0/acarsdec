@@ -137,6 +137,7 @@ static void usage(void)
 		" -e\t\t\t: don't output empty messages (ie : _d,Q0, etc ...)\n"
 		" -i <stationid>\t\t: station id used in acarsdec network format (default: hostname)\n"
 		" -t <seconds>\t\t: set forget time (TTL) to <seconds> for flight routes (affects monitor and routejson, default: 600)\n"
+		" -T \t\t\t: enable timestamping for non-live inputs (enabled by default for SDR/ALSA, disabled for others)\n"
 #ifdef HAVE_LIBACARS
 		" --skip-reassembly\t: disable reassembling fragmented ACARS messages\n"
 #endif
@@ -306,7 +307,7 @@ int main(int argc, char **argv)
 	R.idstation = strdup(sys_hostname);
 
 	res = 0;
-	while ((c = getopt_long(argc, argv, "hvt:g:m:a:Aep:c:i:L:G:b:B:", long_opts, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "hvt:g:m:a:Aep:c:i:L:G:b:B:T", long_opts, NULL)) != EOF) {
 		switch (c) {
 		case -2:
 			res = setup_output(optarg);
@@ -363,6 +364,9 @@ int main(int argc, char **argv)
 			break;
 		case 'B':
 			R.bias = atoi(optarg);
+			break;
+		case 'T':
+			R.ts = true;
 			break;
 #ifdef WITH_RTL
 		case IN_RTL:
