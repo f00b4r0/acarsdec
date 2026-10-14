@@ -130,7 +130,7 @@ int channels_init_sdr(unsigned int Fc, unsigned int multiplier, float scale)
 int channels_init_sdr_resample(unsigned int Fc, unsigned int input_rate, float scale)
 {
 	unsigned int n;
-	float scale_factor;
+	float correctionPhase, scale_factor;
 
 	if (!input_rate)
 		return 1;
@@ -142,7 +142,6 @@ int channels_init_sdr_resample(unsigned int Fc, unsigned int input_rate, float s
 
 	for (n = 0; n < R.nbch; n++) {
 		channel_t *ch = &R.channels[n];
-		float correctionPhase;
 
 		ch->dm_buffer = malloc(DMBUFSZ * sizeof(*ch->dm_buffer));
 		if (ch->dm_buffer == NULL) {
@@ -154,9 +153,8 @@ int channels_init_sdr_resample(unsigned int Fc, unsigned int input_rate, float s
 		vprerr("#%d: Fc = %uHz, Fr = %uHz, phase = % f (%+dHz)\n",
 		       n + 1, Fc, ch->Fr, correctionPhase, (signed)(ch->Fr - Fc));
 
-		ch->mix_phase = scale_factor;
+		ch->mix_scale = ch->mix_phase = scale_factor;
 		ch->mix_step = cexpf(correctionPhase * -I);
-		ch->mix_count = 0;
 	}
 
 	return 0;
@@ -286,7 +284,7 @@ void channels_mix_phasors(const float complex *restrict phasors, unsigned int le
 void channels_mix_phasors_resample(const float complex *restrict phasors, unsigned int len, unsigned int input_rate)
 {
 	static float complex *restrict D = NULL;
-	static unsigned int phase_acc = 0;
+	static unsigned int mix_count = 0, phase_acc = 0;
 	const unsigned int nbch = R.nbch;
 	unsigned int i, n;
 
@@ -309,24 +307,11 @@ void channels_mix_phasors_resample(const float complex *restrict phasors, unsign
 
 		for (n = 0; n < nbch; n++) {
 			channel_t *ch = &R.channels[n];
-			float complex mixed;
 			float phase_mag;
 
 			// Shift this channel from its RF offset down to baseband
 			// and add the result into the current output accumulator.
-			mixed = sample * ch->mix_phase;
-
-#if defined(DEBUG)
-			// The below can be used to debug if the renormalization isn't working
-			// correctly or if the data is bad (the sample is NaN or inf).
-			if (!isfinite(crealf(mixed)) || !isfinite(cimagf(mixed))) {
-				vprerr("WARNING: MIX: resetting non-finite mixed sample on channel #%u\n", n + 1);
-				ch->mix_phase = cabsf(ch->mix_phase) > 0.0F ? ch->mix_phase / cabsf(ch->mix_phase) * ((float)INTRATE / (float)input_rate) : ((float)INTRATE / (float)input_rate);
-				ch->mix_count = 0;
-				mixed = 0.0F;
-			}
-#endif
-			D[n] += mixed;
+			D[n] += sample * ch->mix_phase;
 
 			// Advance the oscillator so the next sample uses the correct
 			// phase for this channels frequency offset.
@@ -334,15 +319,14 @@ void channels_mix_phasors_resample(const float complex *restrict phasors, unsign
 
 			// Every MIX_RENORM_INTERVAL, renormalize the phase magnitude, preventing
 			// drift towards zero/infinity. Floating point roundoff can slowly change
-			// the magnitude of mix_phase. This keeps the oscillator stable. Prior to
-			// implementing this check, after several minutes of runtime, the mix_phase
-			// could/would trend towards zero/inf.
-			if ((++ch->mix_count & (MIX_RENORM_INTERVAL - 1U)) == 0) {
+			// the magnitude of mix_phase. This keeps the oscillator stable.
+			if ((mix_count & (MIX_RENORM_INTERVAL - 1U)) == 0) {
 				phase_mag = cabsf(ch->mix_phase);
 				ch->mix_phase /= phase_mag;
-				ch->mix_phase *= ((float)INTRATE / (float)input_rate);
+				ch->mix_phase *= ch->mix_scale;
 			}
 		}
+		mix_count++;
 
 		// Convert the arbitrary rate into a steady 12kHz output,
 		// and when enough has accumulated, emit a decoder-rate

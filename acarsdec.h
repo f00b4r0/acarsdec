@@ -107,6 +107,7 @@ typedef struct {
 	float complex *restrict inb;		// oversampled bit circular buffer
 	float complex mix_phase;		// arbitrary-rate SDR NCO state
 	float complex mix_step;			// arbitrary-rate SDR NCO increment
+	float mix_scale;			// arbitrary-rate SDR NCO scale factor (for renormalization)
 	float MskPhi;				// MSK oscillator phase
 	float MskDphi;				// MSK oscillator phase offset
 	float MskDf;				// MSK oscillator phase offset integral
@@ -116,7 +117,6 @@ typedef struct {
 	float MskClk;				// MSK bit clock
 	unsigned int MskS;			// MSK sample index
 	unsigned int idx;			// `inb` buffer index
-	unsigned int mix_count;			// arbitrary-rate SDR NCO renormalization counter
 
 	unsigned int Fr;			// channel frequency (in Hz)
 
