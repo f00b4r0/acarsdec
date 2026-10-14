@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <err.h>
+#include <math.h>
 #ifdef HAVE_LIBACARS
 #include <libacars/version.h>
 #endif
@@ -150,7 +151,7 @@ static void usage(void)
 #endif
 #ifdef WITH_SNDFILE
 	fprintf(stderr, "\n --sndfile <file>\t: decode from <file> sampled at a multiple of %u Hz\n", INTRATE);
-	fprintf(stderr, " see \"--sndfile help\" for details\n");
+	fprintf(stderr, "\t\t\t  see \"--sndfile help\" for details\n");
 #endif
 #ifdef WITH_RTL
 	fprintf(stderr,
@@ -412,7 +413,7 @@ int main(int argc, char **argv)
 			break;
 #endif
 		case 'c':
-			R.Fc = (unsigned int)(1000000 * atof(optarg));
+			R.Fc = (unsigned int)lround(1000000 * atof(optarg));
 			break;
 		case 'A':
 			R.airflt = 1;
