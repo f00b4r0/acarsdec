@@ -875,41 +875,43 @@ skip:
 	if (R.emptymsg && (msg.txt == NULL || msg.txt[0] == '\0'))
 		return;
 
+	int len = 0, prevfmt = 0;
 	// for now and until we see contention, we don't bother using a separate thread per output. KISS.
 	for (out = R.outputs; out; out = out->next) {
-		int len = 0;
-		switch (out->fmt) {
-		case FMT_MONITOR:
-			len = fmt_monitor(&msg, blk->chn, blk->tv, fmtbuf, FMTBUFLEN);
-			break;
-		case FMT_ONELINE:
-			len = fmt_oneline(&msg, blk->chn, blk->tv, fmtbuf, FMTBUFLEN);
-			break;
-		case FMT_FULL:
-			len = fmt_msg(&msg, blk->chn, blk->tv, fmtbuf, FMTBUFLEN);
-			break;
-		case FMT_NATIVE:
-			len = fmt_sv(&msg, blk->chn, blk->tv, fmtbuf, FMTBUFLEN);
-			break;
-		case FMT_PP:
-			len = fmt_pp(&msg, fmtbuf, FMTBUFLEN);
-			break;
+		if (prevfmt != out->fmt) {	// avoid reformatting if same format is used consecutively
+			switch (out->fmt) {
+			case FMT_MONITOR:
+				len = fmt_monitor(&msg, blk->chn, blk->tv, fmtbuf, FMTBUFLEN);
+				break;
+			case FMT_ONELINE:
+				len = fmt_oneline(&msg, blk->chn, blk->tv, fmtbuf, FMTBUFLEN);
+				break;
+			case FMT_FULL:
+				len = fmt_msg(&msg, blk->chn, blk->tv, fmtbuf, FMTBUFLEN);
+				break;
+			case FMT_NATIVE:
+				len = fmt_sv(&msg, blk->chn, blk->tv, fmtbuf, FMTBUFLEN);
+				break;
+			case FMT_PP:
+				len = fmt_pp(&msg, fmtbuf, FMTBUFLEN);
+				break;
 #ifdef HAVE_CJSON
-		case FMT_ROUTEJSON:
-			len = fl ? fmt_routejson(fl, blk->tv, fmtbuf, FMTBUFLEN) : -1;
-			break;;
-		case FMT_JSON:
-			len = fmt_json(&msg, blk->chn, blk->tv, fmtbuf, FMTBUFLEN);
-			break;
+			case FMT_ROUTEJSON:
+				len = fl ? fmt_routejson(fl, blk->tv, fmtbuf, FMTBUFLEN) : -1;
+				break;;
+			case FMT_JSON:
+				len = fmt_json(&msg, blk->chn, blk->tv, fmtbuf, FMTBUFLEN);
+				break;
 #endif /* HAVE_CJSON */
-		default:
-			continue;
+			default:
+				continue;
+			}
 		}
-
-		// NB if the same format is used for multiple outputs, the buffer will be recomputed each time. Deemed acceptable
 
 		if (len <= 0)
 			continue;
+
+		prevfmt = out->fmt;
 
 		switch (out->dst) {
 		case DST_FILE:
