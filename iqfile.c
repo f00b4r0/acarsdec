@@ -32,7 +32,7 @@ static FILE *iqfp;
 static enum iqfile_format { IQ_U8, IQ_S16 } iqfmt;
 static unsigned int iqrate;
 
-static int usage(void)
+static void usage(void)
 {
 	fprintf(stderr,
 		"iqfile input accepts as parameters the following coma-separated elements (in any order):\n"
@@ -47,7 +47,7 @@ static int usage(void)
 		"\n",
 		4*INTRATE, INTRATE);
 
-	return 1;
+	exit(1);
 }
 
 int initIqfile(char *optarg)
@@ -62,7 +62,7 @@ int initIqfile(char *optarg)
 	float scale = 127.5F;	// U8 default
 
 	if (!strcmp("help", optarg))
-		return usage();
+		usage();
 
 	retp = parse_params(&optarg, iqp, ARRAY_SIZE(iqp));
 	if (retp) {

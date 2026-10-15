@@ -32,7 +32,7 @@
 
 static SNDFILE *insnd;
 
-static int usage(void)
+static void usage(void)
 {
 	fprintf(stderr,
 		"sndfile input accepts as parameter:\n"
@@ -48,10 +48,11 @@ static int usage(void)
 		"   'data.raw,subtype=2,channels=2,endian=little' to process a 2-channel, 16-bit little-endian PCM data\n"
 		"\n"
 		"NOTE: audio sample rate must be a multiple of %d Hz.\n"
-		"For raw audio, the rate multiplier can be specified via '-m' (default: 1)\n",
+		"For raw audio, the rate multiplier can be specified via '-m' (default: 1)\n"
+		"\n",
 		INTRATE);
 
-	return 1;
+	exit(1);
 }
 
 int initSoundfile(char *optarg)
@@ -91,7 +92,7 @@ int initSoundfile(char *optarg)
 	}
 
 	if (!strcmp("help", fname))
-		return usage();
+		usage();
 
 	// if we have a subtype, assume we're dealing with raw input
 	if (stype) {
