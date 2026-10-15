@@ -4,24 +4,13 @@
 #include <string.h>
 #include "label.h"
 
-static char *lblfilter[1024];
+#define MAX_FILTERS	1024
+static char * lblfilter[MAX_FILTERS];
 
 void build_label_filter(char *arg)
 {
-	int i = 0;
-	char *aptr;
-
-	lblfilter[0] = NULL;
-	if (arg == NULL)
-		return;
-
-	aptr = strtok(strdup(arg), ":");
-	while (aptr) {
-		lblfilter[i] = aptr;
-		i++;
-		aptr = strtok(NULL, ":");
-	}
-	lblfilter[i] = NULL;
+	char **ap;
+	for (ap = lblfilter; ap < &lblfilter[MAX_FILTERS-2] && (*ap = strsep(&arg, ":")); ap++);
 }
 
 int label_filter(char *lbl)
@@ -31,12 +20,9 @@ int label_filter(char *lbl)
 	if (lblfilter[0] == NULL)
 		return 1;
 
-	i = 0;
-	while (lblfilter[i]) {
+	for (i=0; lblfilter[i]; i++)
 		if (strcmp(lbl, lblfilter[i]) == 0)
 			return 1;
-		i++;
-	}
 
 	return 0;
 }

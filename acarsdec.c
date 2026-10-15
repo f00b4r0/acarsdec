@@ -300,7 +300,6 @@ int main(int argc, char **argv)
 		{ NULL, 0, NULL, 0 }
 	};
 	char sys_hostname[HOST_NAME_MAX + 1];
-	char *lblf = NULL;
 	char *inarg = NULL, *statsdarg = NULL;
 
 	gethostname(sys_hostname, HOST_NAME_MAX);
@@ -330,7 +329,7 @@ int main(int argc, char **argv)
 			R.mdly = atoi(optarg);
 			break;
 		case 'b':
-			lblf = optarg;
+			build_label_filter(optarg);
 			break;
 		case IN_IQFILE:
 			if (R.inmode)
@@ -483,8 +482,6 @@ int main(int argc, char **argv)
 
 	if (res)
 		errx(res, "Unable to init input");
-
-	build_label_filter(lblf);
 
 	res = initOutputs();
 	if (res)
