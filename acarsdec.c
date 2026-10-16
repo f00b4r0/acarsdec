@@ -74,6 +74,7 @@ static void print_available_ins(void)
 #ifdef WITH_SNDFILE
 		"[--sndfile <file.wav>]",
 #endif
+		"[--iqfile <params>]",
 	};
 
 	const char *const sdropts[] = {
@@ -120,13 +121,18 @@ static void print_available_ins(void)
 	}
 }
 
-static void usage(void)
+static void versstr(void)
 {
 	fprintf(stderr, "Acarsdec %s Copyright (c) 2007-2022,2025 Thierry Leconte, (c) 2024-2026 Thibaut VARENE\n", ACARSDEC_VERSION);
 #ifdef HAVE_LIBACARS
 	fprintf(stderr, "(libacars %s)\n", LA_VERSION);
 #endif
-	fprintf(stderr, "\nUsage: acarsdec [-A] [-b 'labels,..'] [-e] [-i station_id] [-t secs] [--statsd host=ip,port=1234] --output FORMAT:DESTINATION:PARAMS [--output ...]");
+}
+
+static void usage(void)
+{
+	versstr();
+	fprintf(stderr, "\nUsage: acarsdec [-AhTV] [-b 'labels,..'] [-e] [-i station_id] [-t secs] [--statsd host=ip,port=1234] --output FORMAT:DESTINATION:PARAMS [--output ...]");
 #ifdef HAVE_LIBACARS
 	fprintf(stderr, " [--skip-reassembly]");
 #endif
@@ -136,9 +142,11 @@ static void usage(void)
 		" -A\t\t\t: don't output uplink messages (ie : only aircraft messages)\n"
 		" -b <filter>\t\t: filter output by label (ex: -b \"H1:Q0\" : only output messages  with label H1 or Q0)\n"
 		" -e\t\t\t: don't output empty messages (ie : _d,Q0, etc ...)\n"
+		" -h \t\t\t: show this help message and exit\n"
 		" -i <stationid>\t\t: station id used in acarsdec network format (default: hostname)\n"
 		" -t <seconds>\t\t: set forget time (TTL) to <seconds> for flight routes (affects monitor and routejson, default: 600)\n"
 		" -T \t\t\t: enable timestamping for non-live inputs (enabled by default for SDR/ALSA, disabled for others)\n"
+		" -V \t\t\t: show version number and exit\n"
 #ifdef HAVE_LIBACARS
 		" --skip-reassembly\t: disable reassembling fragmented ACARS messages\n"
 #endif
@@ -307,7 +315,7 @@ int main(int argc, char **argv)
 	R.idstation = strdup(sys_hostname);
 
 	res = 0;
-	while ((c = getopt_long(argc, argv, "hvt:g:m:a:Aep:c:i:L:G:b:B:T", long_opts, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "hvt:g:m:a:Aep:c:i:L:G:b:B:TV", long_opts, NULL)) != EOF) {
 		switch (c) {
 		case -2:
 			res = setup_output(optarg);
@@ -424,6 +432,10 @@ int main(int argc, char **argv)
 			free(R.idstation);
 			R.idstation = strdup(optarg);
 			break;
+		case 'V':
+			versstr();
+			exit(0);
+			break;
 		case 'h':
 		default:
 			usage();
@@ -431,7 +443,7 @@ int main(int argc, char **argv)
 	}
 
 	if (R.inmode == IN_NONE) {
-		fprintf(stderr, "Missing input\n");
+		fprintf(stderr, "Missing input\n\n");
 		usage();
 	}
 
