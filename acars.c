@@ -356,6 +356,8 @@ synced:
 			ch->blk->lvl = 10 * log10f(ch->MskPwr);
 			ch->blk->nf = 20 * log10f(ch->MskNF);
 			ch->blk->chn = ch->chn;
+			ch->blk->txtlen = 0;
+			ch->blk->err = 0;
 			return;
 		}
 		vprerr("#%d didn't get SOH: %x\n", ch->chn+1, r);
