@@ -117,7 +117,7 @@ static void print_available_ins(void)
 				fprintf(stderr, " | ");
 		}
 		fprintf(stderr, " <f1> [<f2> [...]] ]\n\n");
-		fprintf(stderr, " <f1> [<f2> [...]] are given in decimal MHz, e.g. 131.525");
+		fprintf(stderr, " <f1> [<f2> [...]] are given in decimal MHz, e.g. 131.525\n");
 	}
 }
 
@@ -131,18 +131,22 @@ static void versstr(void)
 
 static void usage(void)
 {
-	versstr();
-	fprintf(stderr, "\nUsage: acarsdec [-AhTV] [-b 'labels,..'] [-e] [-i station_id] [-t secs] [--statsd host=ip,port=1234] --output FORMAT:DESTINATION:PARAMS [--output ...]");
+	fprintf(stderr, "\nUsage: acarsdec [-AehTV] [-b 'labels,..'] [-i station_id] [-t secs] [--statsd host=ip,port=1234] --output FORMAT:DESTINATION:PARAMS [--output ...]");
 #ifdef HAVE_LIBACARS
 	fprintf(stderr, " [--skip-reassembly]");
 #endif
 	print_available_ins();
+}
+
+static void long_usage(void) {
+	versstr();
+	usage();
 	fprintf(stderr,
-		"\n\n"
+		"\n"
 		" -A\t\t\t: don't output uplink messages (ie : only aircraft messages)\n"
 		" -b <filter>\t\t: filter output by label (ex: -b \"H1:Q0\" : only output messages  with label H1 or Q0)\n"
 		" -e\t\t\t: don't output empty messages (ie : _d,Q0, etc ...)\n"
-		" -h \t\t\t: show this help message and exit\n"
+		" -h \t\t\t: show the full list of available options and exit\n"
 		" -i <stationid>\t\t: station id used in acarsdec network format (default: hostname)\n"
 		" -t <seconds>\t\t: set forget time (TTL) to <seconds> for flight routes (affects monitor and routejson, default: 600)\n"
 		" -T \t\t\t: enable timestamping for non-live inputs (enabled by default for SDR/ALSA, disabled for others)\n"
@@ -436,9 +440,13 @@ int main(int argc, char **argv)
 			versstr();
 			exit(0);
 			break;
+		case '?':
+			usage();
+			exit(1);
+			break;
 		case 'h':
 		default:
-			usage();
+			long_usage();
 		}
 	}
 
