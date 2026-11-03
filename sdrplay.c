@@ -1,6 +1,7 @@
 /*
  *  Copyright (c) 2015 Thierry Leconte
  *  Copyright (c) 2025 Franco Venturi
+ *  Copyright (c) 2026 Thibaut VARENE
  *
  *
  *   This code is free software; you can redistribute it and/or modify

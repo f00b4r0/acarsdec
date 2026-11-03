@@ -1,6 +1,6 @@
 /*
  *  Copyright (c) 2007-2022,2025 Thierry Leconte
- *  Copyright (c) 2024 Thibaut VARENE
+ *  Copyright (c) 2024-2026 Thibaut VARENE
  *
  *   
  *   This code is free software; you can redistribute it and/or modify

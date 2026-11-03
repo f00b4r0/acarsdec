@@ -1,15 +1,15 @@
 # ACARSDEC
 
-acarsdec is a multi-channels ACARS decoder with built-in rtl_sdr, soapysdr, airspy or sdrplay device support.
+acarsdec is a multi-channels ACARS decoder with built-in SDR, audio and IQ input support.
 Since 3.0, it can work with a database backend: [acarsserv](https://github.com/TLeconte/acarsserv) to store received ACARS messages.
 
 ## Features
 
  * arbitrary number of channels decoded simultaneously (limited by bandwidth and CPU power)
  * error detection AND correction
- * input via either audio file (including raw audio), ALSA soundcard, [rtl_sdr](https://sdr.osmocom.org/trac/wiki/rtl-sdr),
+ * input via either multichannel audio file/stream (including raw audio), ALSA soundcard, SDR devices ([rtl_sdr](https://sdr.osmocom.org/trac/wiki/rtl-sdr),
    [SoapySDR](https://github.com/pothosware/SoapySDR/wiki), [airspy](https://airspy.com/)
-   or [sdrplay](https://www.sdrplay.com) software defined radios (SDR)
+   [sdrplay](https://www.sdrplay.com)) or raw IQ file/stream
  * multiple simultaneous outputs via file, UDP or MQTT
  * multiple output formats: one line, full text, planeplotter, acarsserv, JSON and live monitoring
  * decoding of ARINC-622 ATS applications (ADS-C, CPDLC) via [libacars](https://github.com/szpajder/libacars) library
@@ -72,7 +72,8 @@ You can however forcefully disable autodetection using any of the following CMak
 - `-DMQTT=OFF`
 
 The `-DCMAKE_C_FLAGS="-march=native"` argument to cmake will produce an `acarsdec` executable
-that is optimized for the machine it was built on (and may not run correctly on other devices).
+that is optimized for the machine it was built on (and may not run correctly on other devices),
+improving its performance (i.e. reduced CPU load).
 It can be ommitted for a platform-generic build (with possibly reduced performance).
  
 #### Raspberry Pi builds
@@ -102,8 +103,11 @@ they are detailed below:
  -A		don't output uplink messages (ie : only aircraft messages)
  -b <filter>	filter output by label (ex: -b "H1:Q0" : only output messages  with label H1 or Q0)
  -e		don't output empty messages (ie : _d,Q0, etc ...)
+ -h		show the full list of available options and exit
  -i <stationid>	station id used in statsd reports and network destinations (default: hostname)
  -t <seconds>	set forget time (TTL) in seconds for monitor mode (default: 600)
+ -T		enable timestamping for non-live inputs (enabled by default for SDR/ALSA, disabled for others)
+ -V		show version number and exit
 
  --statsd host=HOST,port=1234		enable statsd reporting to host "HOST" (name or IP) on port "1234"
  --output FORMAT:DESTINATION:DESTPARAMS (see below for supported output formats and destinations. DESTPARAMS are coma-separated: ',')
@@ -118,6 +122,9 @@ If libacars is enabled, the following extra option is available:
 Multiple instances of `--output` can be used. At least one is required.
 See `--output help` for a list of supported formats and destinations.
 Not all combinations of formats and destinations are valid, acarsdec will complain if an invalid combination is chosen.
+When using several outputs with the same formats, grouping them by same output format on the commandline will reduce acarsdec CPU usage.
+(e.g. prefer `--output json:DEST1:PARAMS1 --output json:DEST2:PARAM2 --output full:file --output full:DEST3:PARAM3` instead of
+`--output json:DEST1:PARAMS1 --output full:file --output json:DEST2:PARAM2 --output full:DEST3:PARAM3`)
 
 One (and **only one**) input source must also be selected, see below.
 Options (including frequencies) can be provided in any order.
@@ -219,13 +226,16 @@ saturated messages (where the received level is over 0dB).**
 #### IQ file
 
 ```
- --iqfile file=<file>,sr=<N>,format=<F>	decode raw IQ input from <file>, with samplerate <sr> and format <U8> (default) or <S16>
-					Best performance is achieved if <sr> is a multiple of 12000S/s
- -c <freq>		set center frequency to tune to in MHz, e.g. 131.800 (required)
+ --iqfile file=<file>,sr=<N>,format=<F>	
+			decode raw IQ input from <file>, with samplerate <N> S/s and format <F>: 'U8' (default) or 'S16'
+			Best performance is achieved if <N> is an integer multiple of 12000
+ -c <freq>		set the center frequency of the IQ data in MHz, e.g. 131.800 (required)
  -T			enable timestamping
 ```
 
 See `--iqfile help` for more details.
+
+NB: `<file>` can be `/dev/stdin` to process piped-in data.
 
 #### audio file
 
